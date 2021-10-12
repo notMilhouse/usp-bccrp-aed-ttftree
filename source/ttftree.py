@@ -148,6 +148,8 @@ def main():
 #         tree.to_string()
 
 #pra tarefa de percurso, da pra fazer uma lista de valores e colocar como testPath e dai um for inserindo
+#TODO find a way to get rid of the find function to split father node, thats quite inefficient
+
 
 if __name__ == '__main__':
     main()
