@@ -79,10 +79,10 @@ class TTFTree:
     def _find(self, node, childNode, pathChoice, key):
         index = 0
         
-        while (index < childNode.numKeys and key > childNode.keys[index]):
+        while (index < childNode.num_keys and key > childNode.keys[index]):
             index = index + 1
 
-        if (index < childNode.numKeys and key == childNode.keys[index]):
+        if (index < childNode.num_keys and key == childNode.keys[index]):
             return TTFTreeSearchResult(node, childNode, index, pathChoice, True)
         elif (childNode.isLeaf == True):
             return TTFTreeSearchResult(node, childNode, index, pathChoice, False)
@@ -106,8 +106,8 @@ class TTFTree:
 
     def _split(self, nodeReference):
 
-        targetNode = nodeReference.childNode
-        fatherNode = nodeReference.node
+        targetNode = nodeReference.target_node
+        fatherNode = nodeReference.father_node
 
         if(targetNode == self.root):
             newLeftChild = self._newTreeNode(targetNode.isLeaf)
@@ -130,14 +130,14 @@ class TTFTree:
             targetNode.isLeaf = False
 
         else:
-            fatherNode.insertKey(targetNode.keys[2], nodeReference.keyIndex)
+            fatherNode.insertKey(targetNode.keys[2], nodeReference.target_key_index)
 
             newNode = self._newTreeNode(targetNode.isLeaf)
             fatherNode.insertChild(newNode, nodeReference.childNodeIndex + 1)
 
             for index, key in enumerate(targetNode.keys):
                 if (key > targetNode.keys[2]):
-                    newNode.insertKey(key, nodeReference.keyIndex)
+                    newNode.insertKey(key, nodeReference.target_key_index)
 
             if (not targetNode.isLeaf):
                 for index, key in enumerate(targetNode.keys):
@@ -153,7 +153,7 @@ class TTFTree:
                 targetNode.removeChild(targetNode.children[3])
                 targetNode.removeChild(targetNode.children[3])
 
-            fatherShouldSplit = fatherNode.maxKeys < fatherNode.numKeys or fatherNode.maxChildren < fatherNode.numChildren
+            fatherShouldSplit = fatherNode.maxKeys < fatherNode.num_keys or fatherNode.maxChildren < fatherNode.numChildren
             if (fatherShouldSplit):
                 self._splitFather(fatherNode)
 

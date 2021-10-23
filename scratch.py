@@ -63,11 +63,11 @@ class TTFTree:
     def _find(self, node, key):
         index = 1
         
-        while (index <= node.numKeys and key > node.keys[index]):
+        while (index <= node.num_keys and key > node.keys[index]):
             index = index + 1
             
         
-        if (index <= node.numKeys and key == node.keys[index]):
+        if (index <= node.num_keys and key == node.keys[index]):
             return TTFTreeSearchResult(node, index, True)
         elif (node.isLeaf == True):
             return TTFTreeSearchResult(node, index, False)
@@ -90,27 +90,27 @@ class TTFTree:
                 childToTransfer = childNode.children[j + self.degree]
                 newChild.insertChild(childToTransfer, j)
 
-        print("numero de chaves do filho", childNode.numKeys)
-        childNode.numKeys = self.degree - 1
-        print("numero de chaves do filho", childNode.numKeys)
-        for j in range(node.numKeys + 1, i + 1, -1):
+        print("numero de chaves do filho", childNode.num_keys)
+        childNode.num_keys = self.degree - 1
+        print("numero de chaves do filho", childNode.num_keys)
+        for j in range(node.num_keys + 1, i + 1, -1):
             childToTransfer = node.children[j]
             node.insertChild(childToTransfer, j + 1)
         
         node.insertChild(newChild, i + 1)
 
-        for j in range(node.numKeys, i, -1):
+        for j in range(node.num_keys, i, -1):
             node.insertKey(node.keys[j], j + 1)   
         
         node.insertKey(childNode.keys[self.degree + 1], i)
-        node.numKeys = node.numKeys + 1
+        node.num_keys = node.num_keys + 1
 
         self.toString()
 
     def _insertNonFull(self, node, key):
         self.toString()
         print("non full")
-        i = node.numKeys
+        i = node.num_keys
         if(node.isLeaf == True):
             while(i >= 1 and key < node.keys[i]):
                 node.insertKey(node.keys[i], i + 1)
@@ -118,13 +118,13 @@ class TTFTree:
                 i = i - 1
             
             node.insertKey(key, i + 1)
-            node.numKeys = node.numKeys + 1
+            node.num_keys = node.num_keys + 1
         else:
             while(i >= 1 and key < node.keys[i]):
                 i = i - 1
             i = i + 1
 
-            if(node.children[i].numKeys == node.maxKeys):
+            if(node.children[i].num_keys == node.maxKeys):
                 self._split(node, node.children[i], i)
                 if(key > node.keys[i]):
                     i = i + 1

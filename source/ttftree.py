@@ -133,22 +133,14 @@ class TTFTree:
     def to_string(self):
         print(self.root)
 
-
 def main():
     tree = TTFTree()
-    for i in range(0, 1000):
-        tree.insert(i)
+    while(1):
+        toInsert = int(input("Insira o valor: "))
+        tree.insert(toInsert)
         tree.to_string()
 
-# def main():
-#     tree = TTFTree()
-#     while(1):
-#         toInsert = int(input("Insira o valor: "))
-#         tree.insert(toInsert)
-#         tree.to_string()
-
-#pra tarefa de percurso, da pra fazer uma lista de valores e colocar como testPath e dai um for inserindo
-#TODO find a way to get rid of the find function to split father node, thats quite inefficient
+#TODO find a way to get rid of the find function to split father node, bc that's quite inefficient
 
 
 if __name__ == '__main__':
