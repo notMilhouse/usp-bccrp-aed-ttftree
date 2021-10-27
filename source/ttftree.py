@@ -255,11 +255,11 @@ def main():
 
     choice = input("Sua escolha: ")
 
-    if choice == 1:
+    if choice == '1':
         manual_test()
-    elif choice == 2:
+    elif choice == '2':
         pre_built_test_one()
-    elif choice == 2:
+    elif choice == '3':
         pre_built_test_two()
     else:
         print("Até mais!")
