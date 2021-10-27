@@ -232,7 +232,7 @@ def manual_test():
 
 def pre_built_test_one():
     tree = TTFTree()
-    for i in range(0, 1000):
+    for i in range(0, 500):
         tree.insert(i)
         tree.to_string()
 
