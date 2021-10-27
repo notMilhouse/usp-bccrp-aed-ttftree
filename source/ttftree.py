@@ -7,6 +7,7 @@ __email__ = "gabriel_carvalho@usp.br"
 Over commenting was avoided and self documented code was preferred
 """
 
+
 # contains the information and logic related to the tree father_node
 class TTFTreeNode:
     max_keys = 3
@@ -37,6 +38,7 @@ class TTFTreeNode:
     provided by the standard library,
     pushes current value in index forward automatically
     """
+
     def insert_key(self, key, index):
         self.keys.insert(index, key)
 
