@@ -3,8 +3,11 @@ __credits__ = ["Gabriel Carvalho Silva", "Maria Vitória Ribeiro Mendes"]
 __maintainer__ = "Gabriel Carvalho"
 __email__ = "gabriel_carvalho@usp.br"
 
+"""
+Over commenting was avoided and self documented code was preferred
+"""
 
-# contains the information and logic related to the tree node
+# contains the information and logic related to the tree father_node
 class TTFTreeNode:
     max_keys = 3
     max_children = 4
@@ -14,11 +17,11 @@ class TTFTreeNode:
         self.children = []
         self.is_leaf = is_leaf
 
-    # this method returns how many keys the node is holding
+    # this method returns how many keys the father_node is holding
     def num_keys(self):
         return len(self.keys)
 
-    # this method returns how many children the node points to
+    # this method returns how many children the father_node points to
     def num_children(self):
         return len(self.children)
 
@@ -48,9 +51,9 @@ class TTFTreeNode:
         removed = self.children.remove(child)
         return removed
 
-    # information about the node should be encapsulated, so this method informs
-    #   if a node should be split without giving access to its private information
-    # tells if the node has valid amounts of keys and children
+    # information about the father_node should be encapsulated, so this method informs
+    #   if a father_node should be split without giving access to its private information
+    # tells if the father_node has valid amounts of keys and children
     def should_split(self):
         reached_max_keys = TTFTreeNode.max_keys < self.num_keys()
         reached_max_children = TTFTreeNode.max_children < self.num_children()
@@ -58,7 +61,7 @@ class TTFTreeNode:
         return should_split
 
     """
-    {content} holds the stringfied keys in the node
+    {content} holds the stringfied keys in the father_node
     the keys in the children are added to content recursivelly
     adding tabs as you walk down the three.
     Also, children are presented in the order they would be in the tree
@@ -74,7 +77,7 @@ class TTFTreeNode:
         return content
 
 
-# Represents a search for a key in a node
+# Represents a search for a key in a father_node
 # in case the key was found, all information is what it seems to be
 # otherwise, they inform where it would be expected to be
 class TTFTreeSearchResult:
@@ -83,8 +86,8 @@ class TTFTreeSearchResult:
         self.target_node = target_node
         # where the key is or was expected to be
         self.target_key_index = target_key_index
-        # the child index in the father node that refers to the node where the key is or was expected to be
-        self.target_node_index = target_node_index
+        # the child index in the father father_node that refers to the father_node where the key is or was expected to be
+        self.child_index = target_node_index
         self.match = match
 
     def to_string(self):
@@ -130,21 +133,21 @@ class TTFTree:
         trace_find = self._find(None, self.root, 0, key, trace_find)
         return trace_find
 
-    def _find(self, node, child_node, path_choice, key, trace_find: TTFTreeSearchStackTrace):
+    def _find(self, father_node, candidate_node, child_index, key, trace_find: TTFTreeSearchStackTrace):
         index = 0
 
-        while index < child_node.num_keys() and key > child_node.keys[index]:
+        while index < candidate_node.num_keys() and key > candidate_node.keys[index]:
             index = index + 1
 
-        if index < child_node.num_keys() and key == child_node.keys[index]:
-            trace_find.add_log(TTFTreeSearchResult(node, child_node, index, path_choice, True))
+        if index < candidate_node.num_keys() and key == candidate_node.keys[index]:
+            trace_find.add_log(TTFTreeSearchResult(father_node, candidate_node, index, child_index, True))
             return trace_find
-        elif child_node.is_leaf:
-            trace_find.add_log(TTFTreeSearchResult(node, child_node, index, path_choice, False))
+        elif candidate_node.is_leaf:
+            trace_find.add_log(TTFTreeSearchResult(father_node, candidate_node, index, child_index, False))
             return trace_find
         else:
-            trace_find.add_log(TTFTreeSearchResult(node, child_node, index, path_choice, False))
-            return self._find(child_node, child_node.children[index], index, key, trace_find)
+            trace_find.add_log(TTFTreeSearchResult(father_node, candidate_node, index, child_index, False))
+            return self._find(candidate_node, candidate_node.children[index], index, key, trace_find)
 
     def insert(self, key):
         key_search_stack_trace = self.find(key)
@@ -168,7 +171,7 @@ class TTFTree:
             subtree_root_node = TTFTreeNode(False)
             new_sibling_node = TTFTreeNode(node_reference.target_node.is_leaf)
 
-            subtree_root_node.insert_child(node_reference.target_node, node_reference.target_node_index)
+            subtree_root_node.insert_child(node_reference.target_node, node_reference.child_index)
 
             self.root = subtree_root_node
 
@@ -176,11 +179,11 @@ class TTFTree:
             subtree_root_node = node_reference.father_node
             new_sibling_node = TTFTreeNode(node_reference.target_node.is_leaf)
 
-        subtree_root_node.insert_child(new_sibling_node, node_reference.target_node_index + 1)
+        subtree_root_node.insert_child(new_sibling_node, node_reference.child_index + 1)
 
         median_key = node_reference.target_node.keys[2]
-        subtree_root_node.insert_key(median_key, node_reference.target_node_index)
-        # target_node_index because it is from where the key came
+        subtree_root_node.insert_key(median_key, node_reference.child_index)
+        # child_index because it is from where the key came
 
         for key in node_reference.target_node.keys:
             if key > median_key:
