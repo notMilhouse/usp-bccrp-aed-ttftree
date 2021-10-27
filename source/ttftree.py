@@ -14,10 +14,11 @@ class TTFTreeNode:
         self.children = []
         self.is_leaf = is_leaf
 
-    # dynamically informs array length
+    # this method returns how many keys the node is holding
     def num_keys(self):
         return len(self.keys)
 
+    # this method returns how many children the node points to
     def num_children(self):
         return len(self.children)
 
@@ -28,6 +29,11 @@ class TTFTreeNode:
     def get_last_key(self):
         return self.keys[-1]
 
+    """
+    when inserting, the list method insert, 
+    provided by the standard library,
+    pushes current value in index forward automatically
+    """
     def insert_key(self, key, index):
         self.keys.insert(index, key)
 
@@ -42,6 +48,22 @@ class TTFTreeNode:
         removed = self.children.remove(child)
         return removed
 
+    # information about the node should be encapsulated, so this method informs
+    #   if a node should be split without giving access to its private information
+    # tells if the node has valid amounts of keys and children
+    def should_split(self):
+        reached_max_keys = TTFTreeNode.max_keys < self.num_keys()
+        reached_max_children = TTFTreeNode.max_children < self.num_children()
+        should_split = reached_max_keys or reached_max_children
+        return should_split
+
+    """
+    {content} holds the stringfied keys in the node
+    the keys in the children are added to content recursivelly
+    adding tabs as you walk down the three.
+    Also, children are presented in the order they would be in the tree
+    """
+
     def __str__(self, level=0):
         content = "nivel {}: ".format(level) + "\t" * level
         for key in self.keys:
@@ -50,14 +72,6 @@ class TTFTreeNode:
         for child in self.children:
             content += child.__str__(level + 1)
         return content
-
-    # information about the node should be encapsulated, so this method informs
-    #   if a node should be split without giving access to its private information
-    def should_split(self):
-        reached_max_keys = TTFTreeNode.max_keys < self.num_keys()
-        reached_max_children = TTFTreeNode.max_children < self.num_children()
-        should_split = reached_max_keys or reached_max_children
-        return should_split
 
 
 # Represents a search for a key in a node
