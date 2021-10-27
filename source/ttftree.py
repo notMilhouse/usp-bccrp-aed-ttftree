@@ -62,6 +62,12 @@ class TTFTreeNode:
         should_split = reached_max_keys or reached_max_children
         return should_split
 
+    def has_key_underflow(self):
+        return self.num_keys() < 1
+
+    def has_children_overflow(self):
+        return (self.num_children() - self.num_keys()) > 1
+
     """
     {content} holds the stringfied keys in the father_node
     the keys in the children are added to content recursivelly
@@ -208,6 +214,94 @@ class TTFTree:
             if should_split_father:
                 new_stack_trace = key_search_stack_trace.get_previous()
                 self._split(new_stack_trace)
+
+    def remove(self, key):
+        key_search_stack_trace = self.find(key)
+        key_search_result: TTFTreeSearchResult = key_search_stack_trace.get_last()
+
+        if not key_search_result.match:
+            print("Valor nao existe na arvore...")
+
+        else:
+            key_search_result.target_node.remove_key(key)
+
+            if key_search_result.target_node == self.root:
+                self._remove_root_key(key_search_stack_trace)
+            elif key_search_result.target_node.is_leaf:
+                self._remove_leaf_node_key(key_search_stack_trace)
+            else:
+                self._remove_internal_node_key(key_search_stack_trace)
+
+    def _remove_leaf_node_key(self, key_search_stack_trace: TTFTreeSearchStackTrace):
+        search_result = key_search_stack_trace.get_last()
+        leaf_node: TTFTreeNode = search_result.target_node
+
+        # No keys remaining
+        if leaf_node.has_key_underflow():
+            self._transfer(key_search_stack_trace)
+
+    # maybe rebalance instead of remove? so the recursion procedure stays here
+    def _remove_internal_node_key(self, key_search_stack_trace):
+        pass
+
+    def _remove_root_key(self, key_search_stack_trace):
+        pass
+
+    # if is leaf, then nothing must be done
+
+    def _merge_nodes(self, key_search_stack_trace: TTFTreeSearchStackTrace):
+
+        search_result = key_search_stack_trace.get_last()
+        child_node: TTFTreeNode = search_result.target_node
+        fatherNode: TTFTreeNode = search_result.father_node
+        childPosition = search_result.target_node_index
+        # child node eh o ultimo
+        # father node len(children)-1
+        if (childPosition == (fatherNode.num_children() - 1)):
+            # left sibling gets child node data
+            sibling_node = fatherNode.children[childPosition - 1]
+            for key in child_node.keys:
+                sibling_node.insert_key(key, 4)
+                child_node.remove_key(key)
+            # transfer children from childNode to sibling node
+            for child in child_node.children:
+                sibling_node.insert_child(child, 4)
+            # remove child node from father node children list
+            fatherNode.remove_child(child_node)
+
+        # child node nao eh o ultimo
+        else:
+            # child node gets sibling data
+            sibling_node = fatherNode.children[childPosition + 1]
+            for key in sibling_node.keys:
+                child_node.insert_key(key, 4)
+                sibling_node.remove_key(key)
+            # transfer children from childNode to sibling node
+            for child in sibling_node.children:
+                child_node.insert_child(child, 4)
+            # remove child node from father node children list
+            fatherNode.remove_child(sibling_node)
+
+    def _transfer(self, key_search_stack_trace):
+        # só faz cada transferencia se o no de origem nao for ficar vazio
+        # se for ficar, o teste de children_overflow vai pegar e os merges acontecerão
+        search_result = key_search_stack_trace.get_last()
+        father_node = search_result.father_node
+        target_node = search_result.target_node
+        sibling_node = father_node.children[search_result.target_node_index + 1]
+
+        key_from_father = father_node.keys[search_result.target_node_index]
+        key_from_sibling = sibling_node.keys[0]
+
+        target_node.insert_key(key_from_father, 0)
+        father_node.remove_key(key_from_father)
+
+        father_node.insert_key(key_from_sibling, search_result.target_node_index)
+        sibling_node.remove_key(key_from_sibling)
+
+        if search_result.target_node.has_children_overflow():
+            self._merge_nodes(key_search_stack_trace)
+        # faz o merge na mesma logica de posicao
 
     def to_string(self):
         print(self.root)
