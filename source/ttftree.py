@@ -1,3 +1,10 @@
+__author__ = "Gabriel Carvalho Silva"
+__credits__ = ["Gabriel Carvalho Silva", "Maria Vitória Ribeiro Mendes"]
+__maintainer__ = "Gabriel Carvalho"
+__email__ = "gabriel_carvalho@usp.br"
+
+
+# contains the information and logic related to the tree node
 class TTFTreeNode:
     max_keys = 3
     max_children = 4
@@ -7,12 +14,14 @@ class TTFTreeNode:
         self.children = []
         self.is_leaf = is_leaf
 
+    # dynamically informs array length
     def num_keys(self):
         return len(self.keys)
 
     def num_children(self):
         return len(self.children)
 
+    # easy way to encapsulate checking data
     def is_last_child(self, child):
         return child == self.children[-1]
 
@@ -42,6 +51,8 @@ class TTFTreeNode:
             content += child.__str__(level + 1)
         return content
 
+    # information about the node should be encapsulated, so this method informs
+    #   if a node should be split without giving access to its private information
     def should_split(self):
         reached_max_keys = TTFTreeNode.max_keys < self.num_keys()
         reached_max_children = TTFTreeNode.max_children < self.num_children()
@@ -49,18 +60,26 @@ class TTFTreeNode:
         return should_split
 
 
-# the target node may be the node where the key was found, or the node where the key was expected to be
+# Represents a search for a key in a node
+# in case the key was found, all information is what it seems to be
+# otherwise, they inform where it would be expected to be
 class TTFTreeSearchResult:
     def __init__(self, father_node: TTFTreeNode, target_node: TTFTreeNode, target_key_index, target_node_index, match):
         self.father_node = father_node
         self.target_node = target_node
+        # where the key is or was expected to be
         self.target_key_index = target_key_index
+        # the child index in the father node that refers to the node where the key is or was expected to be
         self.target_node_index = target_node_index
         self.match = match
 
     def to_string(self):
         print("Indice: {}\nMatch: {}".format(self.target_key_index, self.match))
 
+
+# The stack trace contains a stack of TTFTreeSearchResult objects
+#   thus it represents a history, or log, of a search operation
+#   through it, you may have access to all nodes that were visited in a walk
 
 class TTFTreeSearchStackTrace:
     def __init__(self, trace_list=None):
@@ -71,9 +90,14 @@ class TTFTreeSearchStackTrace:
     def add_log(self, search_result):
         self.log.append(search_result)
 
+    # gives you access to the most recent search result, or the top element in the stack
+    #   it does not remove it from the stack tho
     def get_last(self):
         return self.log[-1]
 
+    # if you want to "go back in time" this method gives you all the search result log
+    #   except for the most recent. In other words, it pops the top element in the stack and
+    #   retrieves the remaining data in the stack (still as a stack)
     def get_previous(self):
         if len(self.log) == 1:
             interval = self.log
