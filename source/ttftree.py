@@ -30,8 +30,16 @@ class TTFTreeNode:
     def is_last_child(self, child):
         return child == self.children[-1]
 
+    def get_last_child(self):
+        return self.children[-1]
+
     def get_last_key(self):
         return self.keys[-1]
+
+    def get_rightmost_child(self):
+        if self.is_leaf:
+            return self
+        return self.get_rightmost_child(self.get_last_child())
 
     """
     when inserting, the list method insert, 
@@ -94,7 +102,7 @@ class TTFTreeSearchResult:
         self.target_node = target_node
         # where the key is or was expected to be
         self.target_key_index = target_key_index
-        # the child index in the father father_node that refers to the father_node where the key is or was expected to be
+        # the child index in the father_node that refers to the node where the key is or was expected to be
         self.child_index = target_node_index
         self.match = match
 
@@ -225,14 +233,12 @@ class TTFTree:
         else:
             key_search_result.target_node.remove_key(key)
 
-            if key_search_result.target_node == self.root:
-                self._remove_root_key(key_search_stack_trace)
-            elif key_search_result.target_node.is_leaf:
-                self._remove_leaf_node_key(key_search_stack_trace)
+            if key_search_result.target_node.is_leaf:
+                self._rebalance_leaf_node_key(key_search_stack_trace)
             else:
-                self._remove_internal_node_key(key_search_stack_trace)
+                self._rebalance_internal_node_key(key_search_stack_trace)
 
-    def _remove_leaf_node_key(self, key_search_stack_trace: TTFTreeSearchStackTrace):
+    def _rebalance_leaf_node_key(self, key_search_stack_trace: TTFTreeSearchStackTrace):
         search_result = key_search_stack_trace.get_last()
         leaf_node: TTFTreeNode = search_result.target_node
 
@@ -240,26 +246,32 @@ class TTFTree:
         if leaf_node.has_key_underflow():
             self._transfer(key_search_stack_trace)
 
-    # maybe rebalance instead of remove? so the recursion procedure stays here
-    def _remove_internal_node_key(self, key_search_stack_trace):
-        pass
+    def _rebalance_internal_node_key(self, key_search_stack_trace):
+        last_search_result: TTFTreeSearchResult = key_search_stack_trace.get_last()
+        internal_node: TTFTreeNode = last_search_result.target_node
+        internal_node_key_index = last_search_result.target_key_index
 
-    def _remove_root_key(self, key_search_stack_trace):
-        pass
+        imediate_predecessor_node = internal_node.get_rightmost_child()
+        imediate_predecessor_key = imediate_predecessor_node.get_last_key()
+        stack_trace_for_predecessor = self.find(imediate_predecessor_key)
 
-    # if is leaf, then nothing must be done
+        internal_node.insert_key(imediate_predecessor_key, internal_node_key_index)
+
+        imediate_predecessor_node.remove_key(imediate_predecessor_key)
+
+        self._rebalance_leaf_node_key(stack_trace_for_predecessor)
 
     def _merge_nodes(self, key_search_stack_trace: TTFTreeSearchStackTrace):
 
         search_result = key_search_stack_trace.get_last()
         child_node: TTFTreeNode = search_result.target_node
-        fatherNode: TTFTreeNode = search_result.father_node
-        childPosition = search_result.target_node_index
+        father_node: TTFTreeNode = search_result.father_node
+        child_position = search_result.target_node_index
         # child node eh o ultimo
         # father node len(children)-1
-        if (childPosition == (fatherNode.num_children() - 1)):
+        if child_position == (father_node.num_children() - 1):
             # left sibling gets child node data
-            sibling_node = fatherNode.children[childPosition - 1]
+            sibling_node = father_node.children[child_position - 1]
             for key in child_node.keys:
                 sibling_node.insert_key(key, 4)
                 child_node.remove_key(key)
@@ -267,12 +279,12 @@ class TTFTree:
             for child in child_node.children:
                 sibling_node.insert_child(child, 4)
             # remove child node from father node children list
-            fatherNode.remove_child(child_node)
+            father_node.remove_child(child_node)
 
         # child node nao eh o ultimo
         else:
             # child node gets sibling data
-            sibling_node = fatherNode.children[childPosition + 1]
+            sibling_node = father_node.children[child_position + 1]
             for key in sibling_node.keys:
                 child_node.insert_key(key, 4)
                 sibling_node.remove_key(key)
@@ -280,7 +292,7 @@ class TTFTree:
             for child in sibling_node.children:
                 child_node.insert_child(child, 4)
             # remove child node from father node children list
-            fatherNode.remove_child(sibling_node)
+            father_node.remove_child(sibling_node)
 
     def _transfer(self, key_search_stack_trace):
         # só faz cada transferencia se o no de origem nao for ficar vazio
