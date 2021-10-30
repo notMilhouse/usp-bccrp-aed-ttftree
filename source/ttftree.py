@@ -356,7 +356,7 @@ class TTFTree:
 
 
 # manual testing
-def manual_test():
+def manual_insertion_test():
     tree = TTFTree()
 
     while True:
@@ -386,6 +386,8 @@ def pre_built_removal_test_one(tree: TTFTree):
         tree.remove(i)
         tree.to_string()
 
+    return tree
+
 
 # pre-built test 2
 
@@ -394,6 +396,14 @@ def pre_built_insertion_test_two():
     for i in range(-20, 25):
         tree.insert(i)
         tree.to_string()
+    return tree
+
+
+def pre_built_removal_test_two(tree: TTFTree):
+    for i in range(-20, 25):
+        tree.remove(i)
+        tree.to_string()
+
     return tree
 
 
@@ -407,8 +417,8 @@ def pre_built_insertion_test_three():
 
 
 def main():
-    tree = pre_built_insertion_test_one()
-    pre_built_removal_test_one(tree)
+    tree = pre_built_insertion_test_two()
+    pre_built_removal_test_two(tree)
 
 
 if __name__ == '__main__':
