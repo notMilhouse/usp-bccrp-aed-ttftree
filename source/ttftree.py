@@ -1,7 +1,7 @@
-__author__ = "Gabriel Carvalho Silva"
-__credits__ = ["Gabriel Carvalho Silva", "Maria Vitória Ribeiro Mendes"]
-__maintainer__ = "Gabriel Carvalho"
-__email__ = "gabriel_carvalho@usp.br"
+__author__ = ["Gabriel Carvalho Silva", "Paulo Roberto Domingues dos Santos"]
+__credits__ = ["Gabriel Carvalho Silva", "Maria Vitória Ribeiro Mendes", "Paulo Roberto Domingues dos Santos"]
+__maintainer__ = ["Gabriel Carvalho", "Paulo Roberto Domingues dos Santos"]
+__email__ = ["gabriel_carvalho@usp.br", "pds712@usp.br"]
 
 """
 Over commenting was avoided and self documented code was preferred
@@ -60,8 +60,8 @@ class TTFTreeNode:
         self.children.insert(index, child)
 
     def remove_child(self, child):
-        removed = self.children.remove(child)
-        return removed
+        self.children.remove(child)
+        return child
 
     # information about the father_node should be encapsulated, so this method informs
     #   if a father_node should be split without giving access to its private information
@@ -89,6 +89,12 @@ class TTFTreeNode:
                 target_node.insert_key(key, 0)
             else:
                 target_node.keys.append(key)
+
+        for child in sibling_node.children:
+            if target_node_relative_position == -1:
+                target_node.insert_child(child, 0)
+            else:
+                target_node.children.append(child)
 
         self.remove_child(sibling_node)
 
@@ -259,7 +265,7 @@ class TTFTree:
         leaf_node: TTFTreeNode = search_result.target_node
 
         # No keys remaining
-        if leaf_node.has_key_underflow():
+        if leaf_node.has_key_underflow() and leaf_node != self.root:
             self._transfer(key_search_stack_trace)
 
     def _rebalance_internal_node_key(self, key_search_stack_trace):
@@ -267,37 +273,40 @@ class TTFTree:
         internal_node: TTFTreeNode = last_search_result.target_node
         internal_node_key_index = last_search_result.target_key_index
 
-        imediate_predecessor_node = internal_node.children[internal_node_key_index].get_rightmost_child()
-        imediate_predecessor_key = imediate_predecessor_node.get_last_key()
-        stack_trace_for_predecessor = self.find(imediate_predecessor_key)
+        if internal_node.num_keys() == 0 and internal_node.num_children() == 1:
+            self._transfer(key_search_stack_trace)
 
-        internal_node.insert_key(imediate_predecessor_key, internal_node_key_index)
+        else:
+            imediate_predecessor_node = internal_node.children[internal_node_key_index].get_rightmost_child()
+            imediate_predecessor_key = imediate_predecessor_node.get_last_key()
+            stack_trace_for_predecessor = self.find(imediate_predecessor_key)
 
-        imediate_predecessor_node.remove_key(imediate_predecessor_key)
+            internal_node.insert_key(imediate_predecessor_key, internal_node_key_index)
 
-        self._rebalance_leaf_node_key(stack_trace_for_predecessor)
+            imediate_predecessor_node.remove_key(imediate_predecessor_key)
+
+            self._rebalance_leaf_node_key(stack_trace_for_predecessor)
 
     def _transfer(self, key_search_stack_trace):
-        # só faz cada transferencia se o no de origem nao for ficar vazio
-        # se for ficar, o teste de children_overflow vai pegar e os merges acontecerão
+
         search_result: TTFTreeSearchResult = key_search_stack_trace.get_last()
         father_node: TTFTreeNode = search_result.father_node
         target_node: TTFTreeNode = search_result.target_node
 
         if target_node == father_node.get_last_child():
             shift_child = -1
-            sibling_key_index_shift = -1
+            sibling_key_index = -1
         else:
             shift_child = 1
-            sibling_key_index_shift = 0
+            sibling_key_index = 0
 
         sibling_index = search_result.child_index + shift_child
         sibling_node: TTFTreeNode = father_node.children[sibling_index]
 
-        # TODO in this sibling_key_index helps chossing the key in father
-        borrowed_key_index = search_result.child_index + sibling_key_index_shift
-        key_from_father = father_node.keys[borrowed_key_index]
-        key_from_sibling = sibling_node.keys[sibling_key_index_shift]
+        inherited_key_index_shift = sibling_key_index  # if target node is the last child, the shift is -1, 0 otherwise
+        inherited_key_index = search_result.child_index + inherited_key_index_shift
+        key_from_father = father_node.keys[inherited_key_index]
+        key_from_sibling = sibling_node.keys[sibling_key_index]
 
         target_node.insert_key(key_from_father, 0)
         father_node.remove_key(key_from_father)
@@ -305,21 +314,31 @@ class TTFTree:
         if sibling_node.num_keys() < 2:
             father_node.merge_children(search_result.child_index, sibling_index)
             if father_node.has_key_underflow():
-                self._rebalance_internal_node_key(key_search_stack_trace.get_previous())
+                if father_node == self.root and father_node.num_children() == 1:  # aconteceu merge dos filhos
+                    self.root = target_node
+                else:
+                    self._rebalance_internal_node_key(key_search_stack_trace.get_previous())
 
         else:
             father_node.insert_key(key_from_sibling, search_result.child_index)
             sibling_node.remove_key(key_from_sibling)
 
-        # faz o merge na mesma logica de posicao
+            if not target_node.is_leaf:
+                child_from_sibling = sibling_node.children[sibling_key_index]
+                popped_from_sibling = sibling_node.remove_child(child_from_sibling)
+
+                target_node_relative_position = sibling_index - search_result.child_index
+
+                if target_node_relative_position == -1:
+                    target_node.insert_child(popped_from_sibling, 0)
+                else:
+                    target_node.children.append(popped_from_sibling)
 
     def to_string(self):
         print(self.root)
 
-# TODO caso do root em que quebra eventualmente
-# TODO caso do internal node que fica com insuficiencia de nos
-# manual testing
 
+# manual testing
 def manual_test():
     tree = TTFTree()
 
@@ -331,20 +350,29 @@ def manual_test():
         to_insert = int(user_input)
         tree.insert(to_insert)
         tree.to_string()
+    return tree
 
 
 # pre-built test 1
 
-def pre_built_test_one():
+def pre_built_insertion_test_one():
     tree = TTFTree()
     for i in range(0, 500):
         tree.insert(i)
         tree.to_string()
 
+    return tree
+
+
+def pre_built_removal_test_one(tree: TTFTree):
+    for i in range(0, 500):
+        tree.remove(i)
+        tree.to_string()
+
 
 # pre-built test 2
 
-def pre_built_test_two():
+def pre_built_insertion_test_two():
     tree = TTFTree()
     for i in range(-20, 25):
         tree.insert(i)
@@ -352,12 +380,18 @@ def pre_built_test_two():
     return tree
 
 
-def main():
-    tree = pre_built_test_two()
-    while (1):
-        to_remove = int(input("Que chave quer remover? "))
-        tree.remove(to_remove)
+def pre_built_insertion_test_three():
+    tree = TTFTree()
+    keys = [5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80]
+    for key in keys:
+        tree.insert(key)
         tree.to_string()
+    return tree
+
+
+def main():
+    tree = pre_built_insertion_test_one()
+    pre_built_removal_test_one(tree)
 
 
 if __name__ == '__main__':
