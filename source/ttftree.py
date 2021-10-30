@@ -254,7 +254,7 @@ class TTFTree:
 
         else:
             key_search_result.target_node.remove_key(key)
-
+            # After removing the key, checks for necessary rebalancing
             if key_search_result.target_node.is_leaf:
                 self._rebalance_leaf_node_key(key_search_stack_trace)
             else:
@@ -264,7 +264,7 @@ class TTFTree:
         search_result = key_search_stack_trace.get_last()
         leaf_node: TTFTreeNode = search_result.target_node
 
-        # No keys remaining
+        # If the node suffers from underflow, performs necessary rotations
         if leaf_node.has_key_underflow() and leaf_node != self.root:
             self._transfer(key_search_stack_trace)
 
@@ -293,12 +293,24 @@ class TTFTree:
         father_node: TTFTreeNode = search_result.father_node
         target_node: TTFTreeNode = search_result.target_node
 
+        """
+            By default, the target node borrows from its next right sibling
+            however, if it is the the last child of its father, then there is no right sibling
+            we solve this by borrowing from its next left sibling
+            
+            shift_child stands for the direction we must go to find the sibling
+                1 if it is to the right
+                -1 otherwise
+            sibling_key_index is the index from where we will get the sibling's key
+                0 if shift_child == 1, because we will get the lowest value
+                -1 to get the greatest
+        """
         if target_node == father_node.get_last_child():
             shift_child = -1
-            sibling_key_index = -1
+            sibling_key_index: int = -1
         else:
             shift_child = 1
-            sibling_key_index = 0
+            sibling_key_index: int = 0
 
         sibling_index = search_result.child_index + shift_child
         sibling_node: TTFTreeNode = father_node.children[sibling_index]
@@ -311,10 +323,12 @@ class TTFTree:
         target_node.insert_key(key_from_father, 0)
         father_node.remove_key(key_from_father)
 
+        # if the sibling has only 1 child left, we must perform a merge instead of a full rotation
         if sibling_node.num_keys() < 2:
             father_node.merge_children(search_result.child_index, sibling_index)
             if father_node.has_key_underflow():
-                if father_node == self.root and father_node.num_children() == 1:  # aconteceu merge dos filhos
+                has_all_root_children_been_merged = father_node == self.root and father_node.num_children() == 1
+                if has_all_root_children_been_merged:
                     self.root = target_node
                 else:
                     self._rebalance_internal_node_key(key_search_stack_trace.get_previous())
@@ -323,6 +337,9 @@ class TTFTree:
             father_node.insert_key(key_from_sibling, search_result.child_index)
             sibling_node.remove_key(key_from_sibling)
 
+            # if the node is not leaf and the sibling can lend keys, and the node suffered from a
+            # key underflow (since we are in this function...), then we must get not only the key
+            # but the children "before" the key as well
             if not target_node.is_leaf:
                 child_from_sibling = sibling_node.children[sibling_key_index]
                 popped_from_sibling = sibling_node.remove_child(child_from_sibling)
